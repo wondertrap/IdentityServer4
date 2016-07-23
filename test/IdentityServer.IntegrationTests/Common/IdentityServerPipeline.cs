@@ -16,9 +16,9 @@ namespace IdentityServer4.Tests.Common
 {
     public class IdentityServerPipeline
     {
-        public const string LoginPage = "https://server/ui/login";
-        public const string ConsentPage = "https://server/ui/consent";
-        public const string ErrorPage = "https://server/ui/error";
+        public const string LoginPage = "https://server/account/login";
+        public const string ConsentPage = "https://server/account/consent";
+        public const string ErrorPage = "https://server/home/error";
 
         public const string DiscoveryEndpoint = "https://server/.well-known/openid-configuration";
         public const string DiscoveryKeysEndpoint = "https://server/.well-known/openid-configuration/jwks";
@@ -29,6 +29,7 @@ namespace IdentityServer4.Tests.Common
         public const string IntrospectionEndpoint = "https://server/connect/introspect";
         public const string IdentityTokenValidationEndpoint = "https://server/connect/identityTokenValidation";
         public const string EndSessionEndpoint = "https://server/connect/endsession";
+        public const string EndSessionCallbackEndpoint = "https://server/connect/endsession/callback";
         public const string CheckSessionEndpoint = "https://server/connect/checksession";
 
         public IdentityServerOptions Options { get; set; } = new IdentityServerOptions();
@@ -42,11 +43,24 @@ namespace IdentityServer4.Tests.Common
         public BrowserClient BrowserClient { get; set; }
         public HttpClient Client { get; set; }
 
-        public void Initialize()
+        public void Initialize(string basePath = null)
         {
-            var builder = new WebHostBuilder()
-                .ConfigureServices(ConfigureServices)
-                .Configure(Configure);
+            var builder = new WebHostBuilder();
+            builder.ConfigureServices(ConfigureServices);
+            builder.Configure(app=>
+            {
+                if (basePath != null)
+                {
+                    app.Map(basePath, map =>
+                    {
+                        ConfigureApp(map);
+                    });
+                }
+                else
+                {
+                    ConfigureApp(app);
+                }
+            });
             var server = new TestServer(builder);
 
             Server = new TestServer(builder);
@@ -74,7 +88,7 @@ namespace IdentityServer4.Tests.Common
         public event Action<IApplicationBuilder> OnPreConfigure = x => { };
         public event Action<IApplicationBuilder> OnPostConfigure = x => { };
          
-        public void Configure(IApplicationBuilder app)
+        public void ConfigureApp(IApplicationBuilder app)
         {
             OnPreConfigure(app);
             app.UseIdentityServer();

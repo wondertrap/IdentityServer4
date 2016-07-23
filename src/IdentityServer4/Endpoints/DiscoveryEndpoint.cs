@@ -24,20 +24,20 @@ namespace IdentityServer4.Endpoints
     public class DiscoveryEndpoint : IEndpoint
     {
         private readonly IdentityServerContext _context;
-        private readonly CustomGrantValidator _customGrants;
+        private readonly ExtensionGrantValidator _extensionGrants;
         private readonly IEnumerable<IValidationKeysStore> _keys;
         private readonly ILogger _logger;
         private readonly IdentityServerOptions _options;
         private readonly SecretParser _parsers;
         private readonly IScopeStore _scopes;
 
-        public DiscoveryEndpoint(IdentityServerOptions options, IdentityServerContext context, IScopeStore scopes, ILogger<DiscoveryEndpoint> logger, IEnumerable<IValidationKeysStore> keys, CustomGrantValidator customGrants, SecretParser parsers)
+        public DiscoveryEndpoint(IdentityServerOptions options, IdentityServerContext context, IScopeStore scopes, ILogger<DiscoveryEndpoint> logger, IEnumerable<IValidationKeysStore> keys, ExtensionGrantValidator extensionGrants, SecretParser parsers)
         {
             _options = options;
             _scopes = scopes;
             _logger = logger;
             _context = context;
-            _customGrants = customGrants;
+            _extensionGrants = extensionGrants;
             _parsers = parsers;
             _keys = keys;
         }
@@ -117,16 +117,18 @@ namespace IdentityServer4.Endpoints
             if (_options.DiscoveryOptions.ShowGrantTypes)
             {
                 var standardGrantTypes = Constants.SupportedGrantTypes.AsEnumerable();
-                if (this._options.AuthenticationOptions.EnableLocalLogin == false)
-                {
-                    standardGrantTypes = standardGrantTypes.Where(type => type != OidcConstants.GrantTypes.Password);
-                }
+                
+                // TODO: find a better way to determine if password is support (e.g. by checking the type of IResourceOwnerPasswordValidator
+                //if (this._options.AuthenticationOptions.EnableLocalLogin == false)
+                //{
+                //    standardGrantTypes = standardGrantTypes.Where(type => type != OidcConstants.GrantTypes.Password);
+                //}
 
                 var showGrantTypes = new List<string>(standardGrantTypes);
 
-                if (_options.DiscoveryOptions.ShowCustomGrantTypes)
+                if (_options.DiscoveryOptions.ShowExtensionGrantTypes)
                 {
-                    showGrantTypes.AddRange(_customGrants.GetAvailableGrantTypes());
+                    showGrantTypes.AddRange(_extensionGrants.GetAvailableGrantTypes());
                 }
 
                 document.grant_types_supported = showGrantTypes.ToArray();
@@ -160,37 +162,38 @@ namespace IdentityServer4.Endpoints
 
                 if (_options.Endpoints.EnableAuthorizeEndpoint)
                 {
-                    document.authorization_endpoint = baseUrl + Constants.RoutePaths.Oidc.Authorize;
+                    document.authorization_endpoint = baseUrl + Constants.ProtocolRoutePaths.Authorize;
                 }
 
                 if (_options.Endpoints.EnableTokenEndpoint)
                 {
-                    document.token_endpoint = baseUrl + Constants.RoutePaths.Oidc.Token;
+                    document.token_endpoint = baseUrl + Constants.ProtocolRoutePaths.Token;
                 }
 
                 if (_options.Endpoints.EnableUserInfoEndpoint)
                 {
-                    document.userinfo_endpoint = baseUrl + Constants.RoutePaths.Oidc.UserInfo;
+                    document.userinfo_endpoint = baseUrl + Constants.ProtocolRoutePaths.UserInfo;
                 }
 
                 if (_options.Endpoints.EnableEndSessionEndpoint)
                 {
-                    document.end_session_endpoint = baseUrl + Constants.RoutePaths.Oidc.EndSession;
+                    document.end_session_endpoint = baseUrl + Constants.ProtocolRoutePaths.EndSession;
                 }
 
                 if (_options.Endpoints.EnableCheckSessionEndpoint)
                 {
-                    document.check_session_iframe = baseUrl + Constants.RoutePaths.Oidc.CheckSession;
+                    document.check_session_iframe = baseUrl + Constants.ProtocolRoutePaths.CheckSession;
                 }
 
-                if (_options.Endpoints.EnableTokenRevocationEndpoint)
-                {
-                    document.revocation_endpoint = baseUrl + Constants.RoutePaths.Oidc.Revocation;
-                }
+                //TODO
+                //if (_options.Endpoints.EnableTokenRevocationEndpoint)
+                //{
+                //    document.revocation_endpoint = baseUrl + Constants.ProtocolRoutePaths.Revocation;
+                //}
 
                 if (_options.Endpoints.EnableIntrospectionEndpoint)
                 {
-                    document.introspection_endpoint = baseUrl + Constants.RoutePaths.Oidc.Introspection;
+                    document.introspection_endpoint = baseUrl + Constants.ProtocolRoutePaths.Introspection;
                 }
             }
 
@@ -198,7 +201,7 @@ namespace IdentityServer4.Endpoints
             {
                 if ((await _keys.GetKeysAsync()).Any())
                 {
-                    document.jwks_uri = baseUrl + Constants.RoutePaths.Oidc.DiscoveryWebKeys;
+                    document.jwks_uri = baseUrl + Constants.ProtocolRoutePaths.DiscoveryWebKeys;
                 }
             }
 
@@ -218,13 +221,14 @@ namespace IdentityServer4.Endpoints
             var webKeys = new List<Models.JsonWebKey>();
             foreach (var key in await _keys.GetKeysAsync())
             {
-                if (!(key is AsymmetricSecurityKey) &&
-                     !key.IsSupportedAlgorithm(SecurityAlgorithms.RsaSha256Signature))
-                {
-                    var error = "signing key is not asymmetric and does not support RS256";
-                    _logger.LogError(error);
-                    throw new InvalidOperationException(error);
-                }
+                // todo
+                //if (!(key is AsymmetricSecurityKey) &&
+                //     !key.IsSupportedAlgorithm(SecurityAlgorithms.RsaSha256Signature))
+                //{
+                //    var error = "signing key is not asymmetric and does not support RS256";
+                //    _logger.LogError(error);
+                //    throw new InvalidOperationException(error);
+                //}
               
                 var x509Key = key as X509SecurityKey;
                 if (x509Key != null)

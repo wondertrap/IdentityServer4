@@ -9,6 +9,9 @@ using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using Serilog.Events;
 using IdentityServer4.Configuration;
+using System.Collections.Generic;
+using IdentityServer4.Services.InMemory;
+using IdentityServer4.Validation;
 
 namespace Host
 {
@@ -34,14 +37,23 @@ namespace Host
                 //    RaiseInformationEvents = true,
                 //    RaiseSuccessEvents = true
                 //};
+
+                options.UserInteractionOptions.LoginUrl = "/ui/login";
+                options.UserInteractionOptions.LogoutUrl = "/ui/logout";
+                options.UserInteractionOptions.ConsentUrl = "/ui/consent";
+                options.UserInteractionOptions.ErrorUrl = "/ui/error";
             })
                 .AddInMemoryClients(Clients.Get())
                 .AddInMemoryScopes(Scopes.Get())
-                .AddInMemoryUsers(Users.Get())
-                .SetTemporarySigningCredential();
-                //.SetSigningCredentials(cert);
+                //.AddInMemoryUsers(Users.Get())
+                //.SetTemporarySigningCredential();
+                .SetSigningCredential(cert);
 
-            builder.AddCustomGrantValidator<CustomGrantValidator>();
+            services.AddSingleton<List<InMemoryUser>>(Users.Get());
+            services.AddTransient<UI.Login.LoginService>();
+            services.AddTransient<IResourceOwnerPasswordValidator, InMemoryResourceOwnerPasswordValidator>();
+
+            builder.AddExtensionGrantValidator<Host.Extensions.ExtensionGrantValidator>();
 
             // for the UI
             services
@@ -50,11 +62,11 @@ namespace Host
                 {
                     razor.ViewLocationExpanders.Add(new UI.CustomViewLocationExpander());
                 });
-            services.AddTransient<UI.Login.LoginService>();
         }
 
         public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory)
         {
+            // serilog filter
             Func<LogEvent, bool> serilogFilter = (e) =>
             {
                 var context = e.Properties["SourceContext"].ToString();
@@ -65,6 +77,7 @@ namespace Host
                         e.Level == LogEventLevel.Fatal);
             };
         
+            // built-in logging filter
             Func<string, LogLevel, bool> filter = (scope, level) =>
                 scope.StartsWith("IdentityServer") ||
                 scope.StartsWith("IdentityModel") ||

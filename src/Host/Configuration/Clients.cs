@@ -71,6 +71,26 @@ namespace Host.Configuration
                 },
 
                 ///////////////////////////////////////////
+                // Console Public Resource Owner Flow Sample
+                //////////////////////////////////////////
+                new Client
+                {
+                    ClientId = "roclient.public",
+                    PublicClient = true,
+
+                    AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
+
+                    AllowedScopes = new List<string>
+                    {
+                        StandardScopes.OpenId.Name,
+                        StandardScopes.Email.Name,
+                        StandardScopes.OfflineAccess.Name,
+
+                        "api1", "api2"
+                    }
+                },
+
+                ///////////////////////////////////////////
                 // Introspection Client Sample
                 //////////////////////////////////////////
                 new Client
@@ -96,7 +116,7 @@ namespace Host.Configuration
                 //////////////////////////////////////////
                 new Client
                 {
-                    ClientId = "mvc_implicit",
+                    ClientId = "mvc.implicit",
                     ClientName = "MVC Implicit",
                     ClientUri = "http://identityserver.io",
 
@@ -106,6 +126,11 @@ namespace Host.Configuration
                     {
                         "http://localhost:44077/signin-oidc"
                     },
+                    PostLogoutRedirectUris = new List<string>
+                    {
+                        "http://localhost:44077/"
+                    },
+                    LogoutUri = "http://localhost:44077/signout-oidc",
 
                     AllowedScopes = new List<string>
                     {
@@ -135,8 +160,13 @@ namespace Host.Configuration
                     AllowAccessTokensViaBrowser = false,
                     RedirectUris = new List<string>
                     {
-                        "http://localhost:44077/signin-oidc"
+                        "http://localhost:21402/signin-oidc"
                     },
+                    PostLogoutRedirectUris = new List<string>
+                    {
+                        "http://localhost:21402/"
+                    },
+                    LogoutUri = "http://localhost:21402/signout-oidc",
 
                     AllowedScopes = new List<string>
                     {

@@ -32,7 +32,7 @@ namespace IdentityServer4.Tests.Validation
             IRefreshTokenStore refreshTokens = null,
             IResourceOwnerPasswordValidator resourceOwnerValidator = null,
             IProfileService profile = null,
-            IEnumerable<ICustomGrantValidator> customGrantValidators = null,
+            IEnumerable<IExtensionGrantValidator> extensionGrantValidators = null,
             ICustomRequestValidator customRequestValidator = null,
             ScopeValidator scopeValidator = null)
         {
@@ -61,14 +61,14 @@ namespace IdentityServer4.Tests.Validation
                 customRequestValidator = new DefaultCustomRequestValidator();
             }
 
-            CustomGrantValidator aggregateCustomValidator;
-            if (customGrantValidators == null)
+            ExtensionGrantValidator aggregateExtensionGrantValidator;
+            if (extensionGrantValidators == null)
             {
-                aggregateCustomValidator = new CustomGrantValidator(new [] { new TestGrantValidator() }, TestLogger.Create<CustomGrantValidator>());
+                aggregateExtensionGrantValidator = new ExtensionGrantValidator(new [] { new TestGrantValidator() }, TestLogger.Create<ExtensionGrantValidator>());
             }
             else
             {
-                aggregateCustomValidator = new CustomGrantValidator(customGrantValidators, TestLogger.Create<CustomGrantValidator>());
+                aggregateExtensionGrantValidator = new ExtensionGrantValidator(extensionGrantValidators, TestLogger.Create<ExtensionGrantValidator>());
             }
                 
             if (refreshTokens == null)
@@ -81,7 +81,7 @@ namespace IdentityServer4.Tests.Validation
                 scopeValidator = new ScopeValidator(scopes, new LoggerFactory().CreateLogger<ScopeValidator>());
             }
 
-            var idsrvContext = IdentityServerContextHelper.Create();
+            var idsvrContext = IdentityServerContextHelper.Create();
 
             return new TokenRequestValidator(
                 options, 
@@ -89,7 +89,7 @@ namespace IdentityServer4.Tests.Validation
                 refreshTokens, 
                 resourceOwnerValidator, 
                 profile,
-                aggregateCustomValidator, 
+                aggregateExtensionGrantValidator, 
                 customRequestValidator, 
                 scopeValidator, 
                 new TestEventService(),
@@ -166,7 +166,7 @@ namespace IdentityServer4.Tests.Validation
             }
 
             var clients = CreateClientStore();
-            var idsrvContext = IdentityServerContextHelper.Create();
+            var idsvrContext = IdentityServerContextHelper.Create();
             var logger = TestLogger.Create<TokenValidator>();
 
             var validator = new TokenValidator(
@@ -178,9 +178,39 @@ namespace IdentityServer4.Tests.Validation
                     logger: TestLogger.Create<DefaultCustomTokenValidator>()),
                     keys: new[] { new InMemoryValidationKeysStore(new[] { TestCert.LoadSigningCredentials().Key }) },
                 logger: logger,
-                context: idsrvContext);
+                context: idsvrContext);
 
             return validator;
+        }
+
+        public static ClientSecretValidator CreateClientSecretValidator(IClientStore clients = null, SecretParser parser = null, SecretValidator validator = null)
+        {
+            var options = TestIdentityServerOptions.Create();
+            if (clients == null) clients = new InMemoryClientStore(TestClients.Get());
+
+            if (parser == null)
+            {
+                var parsers = new List<ISecretParser>
+                {
+                    new BasicAuthenticationSecretParser(options, TestLogger.Create<BasicAuthenticationSecretParser>()),
+                    new PostBodySecretParser(options, TestLogger.Create<PostBodySecretParser>())
+                };
+
+                parser = new SecretParser(parsers, TestLogger.Create<SecretParser>());
+            }
+
+            if (validator == null)
+            {
+                var validators = new List<ISecretValidator>
+                {
+                    new HashedSharedSecretValidator(TestLogger.Create<HashedSharedSecretValidator>()),
+                    new PlainTextSharedSecretValidator(TestLogger.Create<PlainTextSharedSecretValidator>())
+                };
+
+                validator = new SecretValidator(validators, TestLogger.Create<SecretValidator>());
+            }
+
+            return new ClientSecretValidator(clients, parser, validator, new TestEventService(), TestLogger.Create<ClientSecretValidator>());
         }
     }
 }

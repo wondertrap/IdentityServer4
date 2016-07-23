@@ -54,12 +54,12 @@ namespace IdentityServer4.Tests.Clients
             var payload = GetPayload(response);
 
             payload.Count().Should().Be(10);
-            payload.Should().Contain("iss", "https://idsrv4");
-            payload.Should().Contain("aud", "https://idsrv4/resources");
+            payload.Should().Contain("iss", "https://idsvr4");
+            payload.Should().Contain("aud", "https://idsvr4/resources");
             payload.Should().Contain("client_id", "roclient");
             payload.Should().Contain("scope", "api1");
             payload.Should().Contain("sub", "88421113");
-            payload.Should().Contain("idp", "idsrv");
+            payload.Should().Contain("idp", "local");
 
             var amr = payload["amr"] as JArray;
             amr.Count().Should().Be(1);
@@ -86,11 +86,11 @@ namespace IdentityServer4.Tests.Clients
             var payload = GetPayload(response);
 
             payload.Count().Should().Be(10);
-            payload.Should().Contain("iss", "https://idsrv4");
-            payload.Should().Contain("aud", "https://idsrv4/resources");
+            payload.Should().Contain("iss", "https://idsvr4");
+            payload.Should().Contain("aud", "https://idsvr4/resources");
             payload.Should().Contain("client_id", "roclient");
             payload.Should().Contain("sub", "88421113");
-            payload.Should().Contain("idp", "idsrv");
+            payload.Should().Contain("idp", "local");
 
             var amr = payload["amr"] as JArray;
             amr.Count().Should().Be(1);
@@ -123,11 +123,11 @@ namespace IdentityServer4.Tests.Clients
             var payload = GetPayload(response);
 
             payload.Count().Should().Be(10);
-            payload.Should().Contain("iss", "https://idsrv4");
-            payload.Should().Contain("aud", "https://idsrv4/resources");
+            payload.Should().Contain("iss", "https://idsvr4");
+            payload.Should().Contain("aud", "https://idsvr4/resources");
             payload.Should().Contain("client_id", "roclient");
             payload.Should().Contain("sub", "88421113");
-            payload.Should().Contain("idp", "idsrv");
+            payload.Should().Contain("idp", "local");
 
             var amr = payload["amr"] as JArray;
             amr.Count().Should().Be(1);

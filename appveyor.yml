@@ -3,7 +3,7 @@ branches:
   only:
   - dev
 build_script:
-- cmd: build.cmd
+- ps: .\build.ps1
 test: off
 artifacts:
 - path: artifacts/packages/*.nupkg
@@ -15,3 +15,10 @@ deploy:
   skip_symbols: true
   on:
     branch: dev
+
+#---------------------------------#
+#  Skip builds for doc changes    #
+#---------------------------------#
+skip_commits:
+  # Regex for matching commit message
+  message: /docs.*/
